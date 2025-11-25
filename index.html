@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Forum Tanya Jawab</title>
+  <title>Forum Tanya Jawab (Auth Enabled)</title>
   <style>
     .donasi-container{text-align: center;padding: 20px;font-family: Arial;}
     .donasi-box{display:flex;flex-direction:column;align-items:center;gap:15px}
@@ -70,11 +70,16 @@
     </section>
 
     <section class="card" id="adminPage">
-      <h2>Admin Panel</h2>
+      <h2>Admin Panel / Login</h2>
 
       <div id="loginBox">
-        <input id="adminPass" type="password" placeholder="Password admin" />
-        <button id="btnLogin" class="btn" style="margin-top:8px">Login</button>
+        <input id="email" type="text" placeholder="Email" />
+        <input id="password" type="password" placeholder="Password" />
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          <button id="btnSignUp" class="btn">Daftar</button>
+          <button id="btnLogin" class="btn">Masuk</button>
+          <button id="btnLogout" class="btn ghost" style="display:none">Keluar</button>
+        </div>
         <div id="loginMsg" style="color:var(--danger);margin-top:8px;display:none"></div>
       </div>
 
@@ -88,15 +93,9 @@
   </div>
 
 <script type="module">
-import { 
-  initializeApp 
-} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-
-import { 
-  getDatabase, ref, push, set, onValue, update, remove, get 
-} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
-
-import bcrypt from "https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getDatabase, ref, push, set, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAh1IGfxM1RRo-c2fUbkGE0NzsZL7Mz1u4",
@@ -110,6 +109,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const auth = getAuth(app);
 
 // UI Elemen
 const namaEl=document.getElementById("nama");
@@ -119,13 +119,27 @@ const btnClear=document.getElementById("btnClear");
 const notice=document.getElementById("notice");
 const listPesan=document.getElementById("listPesan");
 
+// Auth UI
+const emailEl=document.getElementById('email');
+const passwordEl=document.getElementById('password');
+const btnLogin=document.getElementById('btnLogin');
+const btnSignUp=document.getElementById('btnSignUp');
+const btnLogout=document.getElementById('btnLogout');
+const loginMsg=document.getElementById('loginMsg');
+const adminPanel=document.getElementById('adminPanel');
+const pendingList=document.getElementById('pendingList');
+
+let currentUser=null;
+let isAdmin=false;
+
+// Kirim pesan (default status: pending)
 btnKirim.onclick=async()=>{
   const nama=(namaEl.value||"Anonim").trim();
   const pesan=pesanEl.value.trim();
   if(!pesan) return alert("Isi pesan dulu!");
 
   await set(push(ref(db,"forum")),{
-    nama,pesan,status:"pending",time:Date.now()
+    nama,pesan,status:"pending",time:Date.now(),authorUid: currentUser ? currentUser.uid : null
   });
 
   pesanEl.value="";
@@ -134,6 +148,7 @@ btnKirim.onclick=async()=>{
 
 btnClear.onclick=()=>{namaEl.value="";pesanEl.value="";notice.innerHTML=""};
 
+// Tampilkan pesan yang sudah disetujui
 onValue(ref(db,"forum"),snap=>{
   const data=snap.val()||{};
   let html="";
@@ -152,17 +167,9 @@ onValue(ref(db,"forum"),snap=>{
   listPesan.innerHTML=html;
 });
 
-// -------- SYSTEM ADMIN --------
-
+// Routing (public / admin hash)
 const adminPage=document.getElementById("adminPage");
 const publicPage=document.getElementById("publicPage");
-const adminPanel=document.getElementById("adminPanel");
-const adminPass=document.getElementById("adminPass");
-const loginMsg=document.getElementById("loginMsg");
-const pendingList=document.getElementById("pendingList");
-const btnLogin=document.getElementById("btnLogin");
-const backPublic=document.getElementById("backPublic");
-let isAdmin=false;
 
 function route(){
   if(location.hash==="#admin"){
@@ -172,31 +179,66 @@ function route(){
 route();
 window.addEventListener("hashchange",route);
 
-// 🔐 LOGIN DENGAN BCRYPT + FIREBASE
-btnLogin.onclick=async()=>{
-  const dbPass=await get(ref(db,"admin/password"));
-
-  if(!dbPass.exists()){
-    loginMsg.innerHTML="⚠️ Password admin belum disimpan di Firebase!";
-    loginMsg.style.display="block";
-    return;
-  }
-
-  const hashed=dbPass.val();
-  const valid=bcrypt.compareSync(adminPass.value,hashed);
-
-  if(valid){
-    isAdmin=true;
-    loginMsg.style.display="none";
-    adminPanel.style.display="block";
-    loadPending();
-  }else{
-    loginMsg.innerHTML="Password salah!";
-    loginMsg.style.display="block";
-  }
+// Auth actions (signup / login / logout)
+btnSignUp.onclick=async()=>{
+  try{
+    const email=emailEl.value.trim();
+    const pass=passwordEl.value;
+    if(!email||!pass) throw new Error('Isi email & password');
+    const userCred=await createUserWithEmailAndPassword(auth, email, pass);
+    loginMsg.style.display='none';
+    alert('Daftar berhasil. Silakan masuk.');
+  }catch(err){ loginMsg.innerText=err.message; loginMsg.style.display='block'; }
 };
 
-// Menampilkan pesan pending
+btnLogin.onclick=async()=>{
+  try{
+    const email=emailEl.value.trim();
+    const pass=passwordEl.value;
+    if(!email||!pass) throw new Error('Isi email & password');
+    const userCred=await signInWithEmailAndPassword(auth, email, pass);
+    loginMsg.style.display='none';
+  }catch(err){ loginMsg.innerText=err.message; loginMsg.style.display='block'; }
+};
+
+btnLogout.onclick=async()=>{ await signOut(auth); };
+
+// Pantau perubahan autentikasi
+onAuthStateChanged(auth, async user=>{
+  currentUser=user;
+  if(user){
+    // cek apakah UID user terdaftar sebagai admin di DB: /admins/{uid}: true
+    const dbRes = await get(ref(db, `admins/${user.uid}`));
+    isAdmin = dbRes.exists() && dbRes.val() === true;
+
+    emailEl.style.display='none';
+    passwordEl.style.display='none';
+    btnSignUp.style.display='none';
+    btnLogin.style.display='none';
+    btnLogout.style.display='inline-block';
+    loginMsg.style.display='none';
+
+    if(isAdmin){
+      adminPanel.style.display='block';
+      loadPending();
+    }else{
+      adminPanel.style.display='none';
+      pendingList.innerHTML="<i>Anda bukan admin</i>";
+    }
+  }else{
+    isAdmin=false;
+    emailEl.style.display='block';
+    passwordEl.style.display='block';
+    btnSignUp.style.display='inline-block';
+    btnLogin.style.display='inline-block';
+    btnLogout.style.display='none';
+
+    adminPanel.style.display='none';
+    pendingList.innerHTML='';
+  }
+});
+
+// Menampilkan pesan pending (hanya untuk admin)
 function loadPending(){
   onValue(ref(db,"forum"),snap=>{
     const data=snap.val()||{};
@@ -217,11 +259,19 @@ function loadPending(){
   });
 }
 
-window.approve=id=>update(ref(db,"forum/"+id),{status:"approved"});
-window.del=id=>{if(confirm("Hapus?")) remove(ref(db,"forum/"+id))};
+// Fungsi approve & delete: hanya berfungsi jika user adalah admin (cek sisi client dulu, DB rules harus juga diterapkan!)
+window.approve=async id=>{
+  if(!isAdmin) return alert('Akses ditolak. Anda bukan admin.');
+  await update(ref(db,"forum/"+id),{status:"approved"});
+};
+
+window.del=async id=>{
+  if(!isAdmin) return alert('Akses ditolak. Anda bukan admin.');
+  if(confirm('Hapus?')) await remove(ref(db,"forum/"+id));
+};
 
 // Helper
-function escapeHtml(t){return t.replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function escapeHtml(t){ if(!t) return ''; return t.replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 </script>
 
 <!-- SCRIPT UNTUK GENERATE GAMBAR -->
