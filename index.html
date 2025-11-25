@@ -229,20 +229,23 @@
 
     // ====== AUTH: login (Firebase Auth email/password) ======
     btnLogin.addEventListener('click', async () => {
-      const email = (adminEmail.value || '').trim();
-      const pass = adminPass.value || '';
-      if(!email || !pass){ loginMsg.innerText = 'Isi email dan password'; loginMsg.style.display='block'; return; }
+  const email = adminEmail.value;
+  const password = adminPass.value;
 
-      try {
-        await signInWithEmailAndPassword(auth, email, pass);
-        loginMsg.style.display = 'none';
-        // onAuthStateChanged akan handle UI
-      } catch (err) {
-        console.error(err);
-        loginMsg.innerText = 'Login gagal — periksa kredensial';
-        loginMsg.style.display = 'block';
-      }
-    });
+  loginMsg.style.display = "none";
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    loginMsg.innerHTML = "Login berhasil!";
+    loginMsg.style.color = "green";
+    showAdminPanel();
+  } catch (error) {
+    loginMsg.innerHTML = `❌ Error: <b>${error.code}</b><br>${error.message}`;
+    loginMsg.style.color = "red";
+    loginMsg.style.display = "block";
+  }
+});
+
 
     btnLogout.addEventListener('click', async () => {
       try {
