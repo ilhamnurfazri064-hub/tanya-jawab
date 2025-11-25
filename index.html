@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Forum Tanya Jawab — Aman</title>
   <style>
+     .donasi-container{text-align: center;padding: 20px;font-family: Arial;}
+    .donasi-box{display:flex;flex-direction:column;align-items:center;gap:15px}
+    .qr{width:200px;border-radius:10px}
+    .btn-saweria{background:#1a73e8;color:white;padding:12px 20px;border-radius:10px;text-decoration:none;font-size:16px;display:inline-block}
     :root{--bg:#f6f7fb;--card:#ffffff;--muted:#6b7280;--accent:#2563eb;--danger:#ef4444}
     *{box-sizing:border-box}
     body{font-family:Inter, system-ui, Arial; margin:0; background:var(--bg); color:#111}
@@ -33,6 +37,17 @@
   </style>
 </head>
 <body>
+  <div class="donasi-container">
+    <h2>Dukung dengan Donasi</h2>
+    <div class="donasi-box">
+      <a href="https://saweria.co/FaziCihuy" target="_blank">
+        <button style="background:#2563eb;padding:14px 20px;border-radius:10px;color:white;border:none;font-size:18px;">
+          🚀 Donasi via Saweria
+        </button>
+      </a>
+      <img class="qr" src="qr.png"/>
+    </div>
+  </div>
   <div class="container">
     <header>
       <h1>Forum Tanya Jawab</h1>
