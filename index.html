@@ -151,7 +151,7 @@
     const btnLogout = document.getElementById('btnLogout');
 
     const ALLOWED_ADMINS = [
-      "hamnrz647@gmail.com.com"
+      "hamnrz647@gmail.com"
     ];
 
     let currentUser = null;
@@ -253,7 +253,6 @@
     await signInWithEmailAndPassword(auth, email, password);
     loginMsg.innerHTML = "Login berhasil!";
     loginMsg.style.color = "green";
-    showAdminPanel();
   } catch (error) {
     loginMsg.innerHTML = `❌ Error: <b>${error.code}</b><br>${error.message}`;
     loginMsg.style.color = "red";
