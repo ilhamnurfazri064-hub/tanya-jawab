@@ -25,7 +25,6 @@
     </header>
 
     <main>
-      <!-- PUBLIC PAGE -->
       <section class="card" id="publicPage">
         <form id="frm">
           <input id="nama" type="text" placeholder="Nama (opsional)" />
@@ -41,11 +40,10 @@
         <div id="listPesan"></div>
       </section>
 
-      <!-- ADMIN PAGE -->
       <section class="card" id="adminPage" aria-hidden="true">
         <h2>Admin Panel</h2>
         <div id="adminWrap">
-          <!-- LOGIN BOX -->
+          
           <div id="loginBox">
             <p>Masuk sebagai admin (email & password)</p>
             <input id="adminEmail" type="email" placeholder="Email admin" />
@@ -57,7 +55,7 @@
             <div id="loginMsg" style="color:var(--danger);margin-top:8px;display:none"></div>
           </div>
 
-          <!-- ADMIN PANEL (after login) -->
+
           <div id="adminPanel" style="margin-top:12px;display:none">
             <div style="display:flex;align-items:center;gap:8px;justify-content:space-between">
               <h3>Pesan Pending</h3>
@@ -73,7 +71,6 @@
     </main>
   </div>
 
-  <!-- Firebase modular SDK v10 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
     import { getDatabase, ref, push, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
@@ -84,7 +81,6 @@
       signOut 
     } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
-    // ======= GANTI CONFIG DENGAN PROJECTMU =======
     const firebaseConfig = {
       apiKey: "AIzaSyAh1IGfxM1RRo-c2fUbkGE0NzsZL7Mz1u4",
       authDomain: "forum-tanya-jawab.firebaseapp.com",
@@ -94,13 +90,12 @@
       messagingSenderId: "679242793604",
       appId: "1:679242793604:web:54ae1f7608a26fdde738d1"
     };
-    // ==============================================
+
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
 
-    // Elements
     const namaEl = document.getElementById('nama');
     const pesanEl = document.getElementById('pesan');
     const btnKirim = document.getElementById('btnKirim');
@@ -127,7 +122,6 @@
     let currentUser = null;
     let isAdmin = false;
 
-    // ====== PUBLIC: kirim pesan (status pending) ======
     btnKirim.addEventListener('click', async () => {
       const nama = (namaEl.value || 'Anonim').trim();
       const pesan = (pesanEl.value || '').trim();
@@ -148,7 +142,6 @@
 
     btnClear.addEventListener('click', ()=>{ namaEl.value=''; pesanEl.value=''; notice.innerText=''; });
 
-    // ====== PUBLIC: tampilkan hanya yg approved ======
     const forumRef = ref(db, 'forum');
     onValue(forumRef, (snap) => {
       const data = snap.val() || {};
@@ -169,7 +162,6 @@
       listPesan.innerHTML = html;
     }
 
-    // Render pending list for adminPanel — only show approve/delete buttons if isAdmin
     function renderPendingList(data){
       const keys = Object.keys(data || {});
       let html = '';
@@ -188,13 +180,12 @@
       pendingList.innerHTML = html || '<div style="color:var(--muted)">Tidak ada pesan pending</div>';
     }
 
-    // ====== ROUTING sederhana via hash ======
     function route(){
       if(location.hash === '#admin'){
         publicPage.style.display = 'none';
         adminPage.style.display = 'block';
         adminPage.setAttribute('aria-hidden','false');
-        // Tampilkan login box atau admin panel sesuai status auth
+
         if(currentUser && isAdmin){
           document.getElementById('loginBox').style.display = 'none';
           adminPanel.style.display = 'block';
@@ -212,7 +203,6 @@
     window.addEventListener('hashchange', route);
     route();
 
-    // ====== AUTH: login (Firebase Auth email/password) ======
 btnLogin.addEventListener('click', async () => {
   const email = adminEmail.value;
   const password = adminPass.value;
@@ -242,18 +232,17 @@ btnLogin.addEventListener('click', async () => {
 
     backPublic.addEventListener('click', (e)=>{ e.preventDefault(); location.hash=''; });
 
-    // ====== AUTH state listener ======
+
     onAuthStateChanged(auth, (user) => {
       currentUser = user;
       isAdmin = false;
       if(user && user.email){
-        // Tentukan apakah user termasuk admin berdasarkan daftar email
+
         if(ALLOWED_ADMINS.includes(user.email.toLowerCase())){
           isAdmin = true;
         }
       }
 
-      // update UI bits
       if(isAdmin){
         adminInfo.innerText = `Signed in: ${currentUser.email}`;
         document.getElementById('loginBox').style.display = 'none';
@@ -264,18 +253,9 @@ btnLogin.addEventListener('click', async () => {
         document.getElementById('loginBox').style.display = 'block';
       }
 
-      // re-render pending list so buttons appear/disappear correctly
-      // onValue already keeps local cache; trigger a small re-render by reading current snapshot:
-      // (we re-render based on most recent value)
-      // NOTE: this does not fetch remote; onValue callback will already trigger when DB changes.
-      // But to ensure immediate re-render after login state change, we read the snapshot once:
-      // (Read permission must allow)
-      // We'll rely on the onValue listener to call renderPendingList when data arrives; but call route() to show correct panel.
       route();
     });
 
-    // ====== ADMIN ACTIONS: approve / delete (client-side check + call) ======
-    // Expose to window so onclick in generated HTML can call them
     window.approve = async function(id){
       if(!currentUser || !isAdmin){
         alert('Anda tidak berwenang melakukan aksi ini.');
@@ -305,7 +285,6 @@ btnLogin.addEventListener('click', async () => {
       }
     }
 
-    // ====== UTIL ======
     function escapeHtml(str){
       return String(str || '')
         .replaceAll('&','&amp;')
@@ -317,5 +296,6 @@ btnLogin.addEventListener('click', async () => {
   </script>
 </body>
 </html>
+
 
 
