@@ -10,11 +10,14 @@
   <div class="donasi-container">
     <h2>Dukung dengan Donasi</h2>
     <div class="donasi-box">
-      <a href="https://saweria.co/FaziCihuy" target="_blank" class="btn-saweria">🚀 Donasi via Saweria</a>
-      <img class="qr" src="qr.png" alt="QR Saweria"/>
+      <a href="https://saweria.co/FaziCihuy" target="_blank">
+        <button style="background:#2563eb;padding:14px 20px;border-radius:10px;color:white;border:none;font-size:18px;">
+          🚀 Donasi via Saweria
+        </button>
+      </a>
+      <img class="qr" src="qr.png"/>
     </div>
   </div>
-
   <div class="container">
     <header>
       <h1>Forum Tanya Jawab</h1>
@@ -22,6 +25,7 @@
     </header>
 
     <main>
+      <!-- PUBLIC PAGE -->
       <section class="card" id="publicPage">
         <form id="frm">
           <input id="nama" type="text" placeholder="Nama (opsional)" />
@@ -37,9 +41,11 @@
         <div id="listPesan"></div>
       </section>
 
+      <!-- ADMIN PAGE -->
       <section class="card" id="adminPage" aria-hidden="true">
         <h2>Admin Panel</h2>
         <div id="adminWrap">
+          <!-- LOGIN BOX -->
           <div id="loginBox">
             <p>Masuk sebagai admin (email & password)</p>
             <input id="adminEmail" type="email" placeholder="Email admin" />
@@ -51,6 +57,7 @@
             <div id="loginMsg" style="color:var(--danger);margin-top:8px;display:none"></div>
           </div>
 
+          <!-- ADMIN PANEL (after login) -->
           <div id="adminPanel" style="margin-top:12px;display:none">
             <div style="display:flex;align-items:center;gap:8px;justify-content:space-between">
               <h3>Pesan Pending</h3>
@@ -66,10 +73,16 @@
     </main>
   </div>
 
+  <!-- Firebase modular SDK v10 -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import { getDatabase, ref, push, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+    import { 
+      getAuth, 
+      signInWithEmailAndPassword, 
+      onAuthStateChanged, 
+      signOut 
+    } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
     // ======= GANTI CONFIG DENGAN PROJECTMU =======
     const firebaseConfig = {
@@ -107,10 +120,14 @@
     const adminInfo = document.getElementById('adminInfo');
     const btnLogout = document.getElementById('btnLogout');
 
+    const ALLOWED_ADMINS = [
+      "hamnrz647@gmail.com"
+    ];
+
     let currentUser = null;
     let isAdmin = false;
 
-    // PUBLIC: kirim pesan (status pending)
+    // ====== PUBLIC: kirim pesan (status pending) ======
     btnKirim.addEventListener('click', async () => {
       const nama = (namaEl.value || 'Anonim').trim();
       const pesan = (pesanEl.value || '').trim();
@@ -131,7 +148,7 @@
 
     btnClear.addEventListener('click', ()=>{ namaEl.value=''; pesanEl.value=''; notice.innerText=''; });
 
-    // Listen data forum
+    // ====== PUBLIC: tampilkan hanya yg approved ======
     const forumRef = ref(db, 'forum');
     onValue(forumRef, (snap) => {
       const data = snap.val() || {};
@@ -140,18 +157,19 @@
     });
 
     function renderApprovedList(data){
-      const keys = Object.keys(data || {});
+      const keys = Object.keys(data);
       let html = '';
       for(const k of keys){
         const item = data[k];
         if(item && item.status === 'approved'){
           const t = new Date(item.time || Date.now());
-          html += `\n  <div class="msg" id="msg-${k}">\n    <div class="bubble">\n      <div class="name">${escapeHtml(item.nama)}</div>\n      <div class="text">${escapeHtml(item.pesan)}</div>\n      <div class="meta">${t.toLocaleString()}</div>\n    </div>\n    <div style="margin-top:8px">\n      <button class="btn ghost" style="font-size:12px" onclick="downloadBubble('msg-${k}')">📥 Download</button>\n    </div>\n  </div>`;
+          html += `<div class="msg"><div class="name">${escapeHtml(item.nama)}</div><div class="text">${escapeHtml(item.pesan)}</div><div class="meta">${t.toLocaleString()}</div></div>`;
         }
       }
-      listPesan.innerHTML = html || '<div style="color:var(--muted)">Belum ada pertanyaan yang disetujui.</div>';
+      listPesan.innerHTML = html;
     }
 
+    // Render pending list for adminPanel — only show approve/delete buttons if isAdmin
     function renderPendingList(data){
       const keys = Object.keys(data || {});
       let html = '';
@@ -170,13 +188,13 @@
       pendingList.innerHTML = html || '<div style="color:var(--muted)">Tidak ada pesan pending</div>';
     }
 
-    // routing (hash) antara public / admin
+    // ====== ROUTING sederhana via hash ======
     function route(){
       if(location.hash === '#admin'){
         publicPage.style.display = 'none';
         adminPage.style.display = 'block';
         adminPage.setAttribute('aria-hidden','false');
-
+        // Tampilkan login box atau admin panel sesuai status auth
         if(currentUser && isAdmin){
           document.getElementById('loginBox').style.display = 'none';
           adminPanel.style.display = 'block';
@@ -194,54 +212,50 @@
     window.addEventListener('hashchange', route);
     route();
 
-    // LOGIN
-    btnLogin.addEventListener('click', async () => {
-      const email = (adminEmail.value || '').trim();
-      const password = (adminPass.value || '').trim();
+    // ====== AUTH: login (Firebase Auth email/password) ======
+btnLogin.addEventListener('click', async () => {
+  const email = adminEmail.value;
+  const password = adminPass.value;
 
-      loginMsg.style.display = "none";
+  loginMsg.style.display = "none";
 
-      if(!email || !password){
-        loginMsg.innerText = 'Masukkan email dan password.';
-        loginMsg.style.color = 'red';
-        loginMsg.style.display = 'block';
-        return;
-      }
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    loginMsg.innerHTML = "Login berhasil!";
+    loginMsg.style.color = "green";
+  } catch (error) {
+    loginMsg.innerHTML = `❌ Error: <b>${error.code}</b><br>${error.message}`;
+    loginMsg.style.color = "red";
+    loginMsg.style.display = "block";
+  }
+});
 
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        loginMsg.innerHTML = "Login berhasil!";
-        loginMsg.style.color = "green";
-      } catch (error) {
-        console.error(error);
-        loginMsg.innerHTML = `❌ Error: ${error.message}`;
-        loginMsg.style.color = "red";
-        loginMsg.style.display = "block";
-      }
-    });
 
     btnLogout.addEventListener('click', async () => {
       try {
         await signOut(auth);
-      } catch(err){ console.error(err); alert('Gagal logout'); }
+      } catch(err){
+        console.error(err);
+        alert('Gagal logout');
+      }
     });
 
-    // auth state handler — cek role admin via node /admins/<uid>
-    onAuthStateChanged(auth, async (user) => {
+    backPublic.addEventListener('click', (e)=>{ e.preventDefault(); location.hash=''; });
+
+    // ====== AUTH state listener ======
+    onAuthStateChanged(auth, (user) => {
       currentUser = user;
       isAdmin = false;
-
-      if(user && user.uid){
-        try {
-          const snap = await get(ref(db, `admins/${user.uid}`));
-          if(snap && snap.exists && snap.val() === true){
-            isAdmin = true;
-          }
-        } catch(e){ console.error('cek admin error', e); }
+      if(user && user.email){
+        // Tentukan apakah user termasuk admin berdasarkan daftar email
+        if(ALLOWED_ADMINS.includes(user.email.toLowerCase())){
+          isAdmin = true;
+        }
       }
 
+      // update UI bits
       if(isAdmin){
-        adminInfo.innerText = `Signed in: ${user.email}`;
+        adminInfo.innerText = `Signed in: ${currentUser.email}`;
         document.getElementById('loginBox').style.display = 'none';
         adminPanel.style.display = 'block';
       } else {
@@ -250,61 +264,58 @@
         document.getElementById('loginBox').style.display = 'block';
       }
 
+      // re-render pending list so buttons appear/disappear correctly
+      // onValue already keeps local cache; trigger a small re-render by reading current snapshot:
+      // (we re-render based on most recent value)
+      // NOTE: this does not fetch remote; onValue callback will already trigger when DB changes.
+      // But to ensure immediate re-render after login state change, we read the snapshot once:
+      // (Read permission must allow)
+      // We'll rely on the onValue listener to call renderPendingList when data arrives; but call route() to show correct panel.
       route();
     });
 
-    // approve / delete functions (exposed globally so buttons can call)
+    // ====== ADMIN ACTIONS: approve / delete (client-side check + call) ======
+    // Expose to window so onclick in generated HTML can call them
     window.approve = async function(id){
-      if(!currentUser || !isAdmin){ alert('Anda tidak berwenang'); return; }
-      try { await update(ref(db, 'forum/' + id), { status: 'approved' }); }
-      catch(err){ console.error(err); alert('Gagal approve'); }
+      if(!currentUser || !isAdmin){
+        alert('Anda tidak berwenang melakukan aksi ini.');
+        return;
+      }
+      try {
+        const itemRef = ref(db, 'forum/' + id);
+        await update(itemRef, { status: 'approved' });
+      } catch(err){
+        console.error(err);
+        alert('Gagal approve pesan.');
+      }
     }
 
     window.del = async function(id){
-      if(!currentUser || !isAdmin){ alert('Anda tidak berwenang'); return; }
+      if(!currentUser || !isAdmin){
+        alert('Anda tidak berwenang melakukan aksi ini.');
+        return;
+      }
       if(!confirm('Hapus pesan ini?')) return;
-      try { await remove(ref(db, 'forum/' + id)); }
-      catch(err){ console.error(err); alert('Gagal hapus'); }
+      try {
+        const itemRef = ref(db, 'forum/' + id);
+        await remove(itemRef);
+      } catch(err){
+        console.error(err);
+        alert('Gagal menghapus pesan.');
+      }
     }
 
-    // util
-    function escapeHtml(str){ return String(str||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;"); }
-  </script>
-
-  <!-- html2canvas for bubble download -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script>
-    window.downloadBubble = function(id){
-      const el = document.getElementById(id);
-      if(!el){ alert('Elemen tidak ditemukan'); return; }
-
-      // Clone element to ensure consistent styling and remove interactive buttons
-      const clone = el.cloneNode(true);
-      // remove download button if present inside clone
-      const btns = clone.querySelectorAll('button');
-      btns.forEach(b=>b.remove());
-
-      // create wrapper to set background clean
-      const wrapper = document.createElement('div');
-      wrapper.style.padding = '18px';
-      wrapper.style.background = '#ffffff';
-      wrapper.style.display = 'inline-block';
-      wrapper.appendChild(clone);
-
-      document.body.appendChild(wrapper);
-
-      html2canvas(wrapper, { backgroundColor: null, scale: 2 }).then(canvas => {
-        const a = document.createElement('a');
-        a.download = 'pertanyaan-' + Date.now() + '.png';
-        a.href = canvas.toDataURL('image/png');
-        a.click();
-        wrapper.remove();
-      }).catch(err => {
-        console.error(err);
-        wrapper.remove();
-        alert('Gagal generate gambar');
-      });
-    };
+    // ====== UTIL ======
+    function escapeHtml(str){
+      return String(str || '')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#39;");
+    }
   </script>
 </body>
 </html>
+
+
