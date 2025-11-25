@@ -1,292 +1,334 @@
 <!doctype html>
-<html lang="en">
+<html lang="id">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Forum Tanya Jawab (Auth Enabled)</title>
+  <title>Forum Tanya Jawab — Aman</title>
   <style>
-    .donasi-container{text-align: center;padding: 20px;font-family: Arial;}
-    .donasi-box{display:flex;flex-direction:column;align-items:center;gap:15px}
-    .qr{width:200px;border-radius:10px}
-    .btn-saweria{background:#1a73e8;color:white;padding:12px 20px;border-radius:10px;text-decoration:none;font-size:16px;display:inline-block}
-    
     :root{--bg:#f6f7fb;--card:#ffffff;--muted:#6b7280;--accent:#2563eb;--danger:#ef4444}
     *{box-sizing:border-box}
-    body{font-family:Inter, system-ui, Arial;margin:0;background:var(--bg);color:#111}
+    body{font-family:Inter, system-ui, Arial; margin:0; background:var(--bg); color:#111}
     .container{max-width:900px;margin:30px auto;padding:20px}
     header h1{margin:0 0 10px;font-size:22px}
     .card{background:var(--card);border-radius:10px;padding:16px;box-shadow:0 6px 18px rgba(16,24,40,0.06)}
     form{display:flex;gap:12px;flex-direction:column}
-    input[type=text], textarea{width:100%;padding:12px;border:1px solid #e6e9ef;border-radius:8px;font-size:14px}
+    input[type=text], input[type=email], textarea{width:100%;padding:12px;border:1px solid #e6e9ef;border-radius:8px;font-size:14px}
     textarea{min-height:80px;resize:vertical}
     .row{display:flex;gap:12px}
     .btn{background:var(--accent);color:#fff;padding:10px 14px;border-radius:8px;border:0;cursor:pointer}
     .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(37,99,235,0.18)}
     #listPesan{margin-top:18px}
-    .msg{background:#ffffff;padding:14px;border-radius:12px;margin-bottom:12px;border-left:4px solid #2563eb;box-shadow:0 3px 8px rgba(0,0,0,0.05)}
-    .msg .name{font-weight:700;color:#0f172a;font-size:15px}
-    .msg .text{margin-top:6px;color:#111;font-size:14px}
+    .msg{display:block;background:#f3f4f6;padding:14px;border-radius:10px;margin-bottom:10px}
+    .msg .name{font-weight:700;color:#0f172a}
+    .msg .text{margin-top:6px;color:#111}
     .msg .meta{margin-top:8px;color:var(--muted);font-size:12px}
-    .admin-link{margin-top:10px;display:inline-block;color:var(--muted);text-decoration:none}
-    
+    .admin-link{display:inline-block;margin-top:10px;color:var(--muted);text-decoration:none}
     #adminPage{display:none}
-    .pending-list{margin-top:10px}
-    .pending-item{background:#fff;padding:12px;border-radius:12px;border:1px solid #eef2ff;margin-bottom:8px}
+    .admin-wrap{display:flex;gap:12px;align-items:flex-start}
+    .pending-list{flex:1}
+    .pending-item{background:#fff;padding:12px;border-radius:8px;border:1px solid #eef2ff;margin-bottom:8px}
+    .pending-actions{margin-top:8px}
+    .small{font-size:13px;color:var(--muted)}
     @media(max-width:600px){.row{flex-direction:column}}
   </style>
 </head>
 <body>
-  
-  <div class="donasi-container">
-    <h2>Dukung dengan Donasi</h2>
-    <div class="donasi-box">
-      <a href="https://saweria.co/FaziCihuy" target="_blank">
-        <button style="background:#2563eb;padding:14px 20px;border-radius:10px;color:white;border:none;font-size:18px;">
-          🚀 Donasi via Saweria
-        </button>
-      </a>
-      <img class="qr" src="qr.png"/>
-    </div>
-  </div>
-
   <div class="container">
     <header>
       <h1>Forum Tanya Jawab</h1>
-      <p style="margin:0;color:var(--muted)">Kirim pesan — akan tampil setelah disetujui admin.</p>
+      <p style="margin:0;color:var(--muted)">Kirim pesan — akan tampil <strong>setelah</strong> disetujui admin.</p>
     </header>
 
-    <section class="card" id="publicPage">
-      <form id="frm">
-        <input id="nama" type="text" placeholder="Nama (opsional)" />
-        <textarea id="pesan" placeholder="Tulis pesan..."></textarea>
-        <div class="row">
-          <button type="button" class="btn" id="btnKirim">Kirim</button>
-          <button type="button" class="btn ghost" id="btnClear">Bersihkan</button>
-          <a href="#admin" class="admin-link">Admin</a>
+    <main>
+      <!-- PUBLIC PAGE -->
+      <section class="card" id="publicPage">
+        <form id="frm">
+          <input id="nama" type="text" placeholder="Nama (opsional)" />
+          <textarea id="pesan" placeholder="Tulis pesan..."></textarea>
+          <div class="row">
+            <button type="button" class="btn" id="btnKirim">Kirim</button>
+            <button type="button" class="btn ghost" id="btnClear">Bersihkan</button>
+            <a href="#admin" class="admin-link">Masuk ke halaman admin</a>
+          </div>
+        </form>
+
+        <div id="notice" style="margin-top:12px;color:var(--muted);font-size:13px"></div>
+        <div id="listPesan"></div>
+      </section>
+
+      <!-- ADMIN PAGE -->
+      <section class="card" id="adminPage" aria-hidden="true">
+        <h2>Admin Panel</h2>
+        <div id="adminWrap">
+          <!-- LOGIN BOX -->
+          <div id="loginBox">
+            <p>Masuk sebagai admin (email & password)</p>
+            <input id="adminEmail" type="email" placeholder="Email admin" />
+            <input id="adminPass" type="password" placeholder="Password admin" />
+            <div style="margin-top:8px">
+              <button id="btnLogin" class="btn">Login</button>
+              <a href="#" id="backPublic" class="admin-link">Kembali</a>
+            </div>
+            <div id="loginMsg" style="color:var(--danger);margin-top:8px;display:none"></div>
+          </div>
+
+          <!-- ADMIN PANEL (after login) -->
+          <div id="adminPanel" style="margin-top:12px;display:none">
+            <div style="display:flex;align-items:center;gap:8px;justify-content:space-between">
+              <h3>Pesan Pending</h3>
+              <div>
+                <span id="adminInfo" class="small"></span>
+                <button id="btnLogout" class="btn ghost" style="margin-left:8px">Logout</button>
+              </div>
+            </div>
+            <div class="pending-list" id="pendingList"></div>
+          </div>
         </div>
-      </form>
-      <div id="notice" style="margin-top:12px;color:var(--muted);font-size:13px"></div>
-      <div id="listPesan"></div>
-    </section>
-
-    <section class="card" id="adminPage">
-      <h2>Admin Panel / Login</h2>
-
-      <div id="loginBox">
-        <input id="email" type="text" placeholder="Email" />
-        <input id="password" type="password" placeholder="Password" />
-        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
-          <button id="btnSignUp" class="btn">Daftar</button>
-          <button id="btnLogin" class="btn">Masuk</button>
-          <button id="btnLogout" class="btn ghost" style="display:none">Keluar</button>
-        </div>
-        <div id="loginMsg" style="color:var(--danger);margin-top:8px;display:none"></div>
-      </div>
-
-      <div id="adminPanel" style="display:none;margin-top:15px">
-        <h3>Pesan Pending</h3>
-        <div id="pendingList"></div>
-      </div>
-
-      <a href="#" id="backPublic" class="admin-link">Kembali</a>
-    </section>
+      </section>
+    </main>
   </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-import { getDatabase, ref, push, set, onValue, update, remove, get } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  <!-- Firebase modular SDK v10 -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { getDatabase, ref, push, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+    import { 
+      getAuth, 
+      signInWithEmailAndPassword, 
+      onAuthStateChanged, 
+      signOut 
+    } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAh1IGfxM1RRo-c2fUbkGE0NzsZL7Mz1u4",
-  authDomain: "forum-tanya-jawab.firebaseapp.com",
-  databaseURL: "https://forum-tanya-jawab-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "forum-tanya-jawab",
-  storageBucket: "forum-tanya-jawab.appspot.com",
-  messagingSenderId: "679242793604",
-  appId: "1:679242793604:web:54ae1f7608a26fdde738d1"
-};
+    // ======= GANTI CONFIG DENGAN PROJECTMU =======
+    const firebaseConfig = {
+      apiKey: "AIzaSyAh1IGfxM1RRo-c2fUbkGE0NzsZL7Mz1u4",
+      authDomain: "forum-tanya-jawab.firebaseapp.com",
+      databaseURL: "https://forum-tanya-jawab-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "forum-tanya-jawab",
+      storageBucket: "forum-tanya-jawab.appspot.com",
+      messagingSenderId: "679242793604",
+      appId: "1:679242793604:web:54ae1f7608a26fdde738d1"
+    };
+    // ==============================================
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const auth = getAuth(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
 
-// UI Elemen
-const namaEl=document.getElementById("nama");
-const pesanEl=document.getElementById("pesan");
-const btnKirim=document.getElementById("btnKirim");
-const btnClear=document.getElementById("btnClear");
-const notice=document.getElementById("notice");
-const listPesan=document.getElementById("listPesan");
+    // Elements
+    const namaEl = document.getElementById('nama');
+    const pesanEl = document.getElementById('pesan');
+    const btnKirim = document.getElementById('btnKirim');
+    const btnClear = document.getElementById('btnClear');
+    const listPesan = document.getElementById('listPesan');
+    const notice = document.getElementById('notice');
 
-// Auth UI
-const emailEl=document.getElementById('email');
-const passwordEl=document.getElementById('password');
-const btnLogin=document.getElementById('btnLogin');
-const btnSignUp=document.getElementById('btnSignUp');
-const btnLogout=document.getElementById('btnLogout');
-const loginMsg=document.getElementById('loginMsg');
-const adminPanel=document.getElementById('adminPanel');
-const pendingList=document.getElementById('pendingList');
+    const adminPage = document.getElementById('adminPage');
+    const publicPage = document.getElementById('publicPage');
+    const adminPass = document.getElementById('adminPass');
+    const adminEmail = document.getElementById('adminEmail');
+    const btnLogin = document.getElementById('btnLogin');
+    const loginMsg = document.getElementById('loginMsg');
+    const adminPanel = document.getElementById('adminPanel');
+    const pendingList = document.getElementById('pendingList');
+    const backPublic = document.getElementById('backPublic');
+    const adminInfo = document.getElementById('adminInfo');
+    const btnLogout = document.getElementById('btnLogout');
 
-let currentUser=null;
-let isAdmin=false;
+    // ADMIN LIST (email yang diizinkan sebagai admin)
+    // Catatan: ini hanya untuk UX; keamanan sesungguhnya harus di-harden via Database Rules.
+    const ALLOWED_ADMINS = [
+      "admin@example.com" // ganti dengan alamat email admin yang sah
+    ];
 
-// Kirim pesan (default status: pending)
-btnKirim.onclick=async()=>{
-  const nama=(namaEl.value||"Anonim").trim();
-  const pesan=pesanEl.value.trim();
-  if(!pesan) return alert("Isi pesan dulu!");
+    let currentUser = null;
+    let isAdmin = false;
 
-  await set(push(ref(db,"forum")),{
-    nama,pesan,status:"pending",time:Date.now(),authorUid: currentUser ? currentUser.uid : null
-  });
+    // ====== PUBLIC: kirim pesan (status pending) ======
+    btnKirim.addEventListener('click', async () => {
+      const nama = (namaEl.value || 'Anonim').trim();
+      const pesan = (pesanEl.value || '').trim();
+      if(!pesan){ alert('Isi pesan dulu'); return }
 
-  pesanEl.value="";
-  notice.innerHTML="Pesan terkirim dan menunggu verifikasi admin.";
-};
+      try {
+        const messagesRef = ref(db, 'forum');
+        const newRef = push(messagesRef);
+        await set(newRef, { nama, pesan, status: 'pending', time: Date.now() });
 
-btnClear.onclick=()=>{namaEl.value="";pesanEl.value="";notice.innerHTML=""};
-
-// Tampilkan pesan yang sudah disetujui
-onValue(ref(db,"forum"),snap=>{
-  const data=snap.val()||{};
-  let html="";
-  Object.keys(data).forEach(k=>{
-    const d=data[k];
-    if(d.status==="approved"){
-      html+=`
-      <div class="msg" id="msg-${k}">
-        <div class="name">${escapeHtml(d.nama)}</div>
-        <div class="text">${escapeHtml(d.pesan)}</div>
-        <div class="meta">${new Date(d.time).toLocaleString()}</div>
-        <button class="btn ghost" style="margin-top:6px;font-size:12px" onclick="downloadBubble('msg-${k}')">📥 Download</button>
-      </div>`;
-    }
-  });
-  listPesan.innerHTML=html;
-});
-
-// Routing (public / admin hash)
-const adminPage=document.getElementById("adminPage");
-const publicPage=document.getElementById("publicPage");
-
-function route(){
-  if(location.hash==="#admin"){
-    adminPage.style.display="block"; publicPage.style.display="none";
-  }else{ adminPage.style.display="none"; publicPage.style.display="block"; }
-}
-route();
-window.addEventListener("hashchange",route);
-
-// Auth actions (signup / login / logout)
-btnSignUp.onclick=async()=>{
-  try{
-    const email=emailEl.value.trim();
-    const pass=passwordEl.value;
-    if(!email||!pass) throw new Error('Isi email & password');
-    const userCred=await createUserWithEmailAndPassword(auth, email, pass);
-    loginMsg.style.display='none';
-    alert('Daftar berhasil. Silakan masuk.');
-  }catch(err){ loginMsg.innerText=err.message; loginMsg.style.display='block'; }
-};
-
-btnLogin.onclick=async()=>{
-  try{
-    const email=emailEl.value.trim();
-    const pass=passwordEl.value;
-    if(!email||!pass) throw new Error('Isi email & password');
-    const userCred=await signInWithEmailAndPassword(auth, email, pass);
-    loginMsg.style.display='none';
-  }catch(err){ loginMsg.innerText=err.message; loginMsg.style.display='block'; }
-};
-
-btnLogout.onclick=async()=>{ await signOut(auth); };
-
-// Pantau perubahan autentikasi
-onAuthStateChanged(auth, async user=>{
-  currentUser=user;
-  if(user){
-    // cek apakah UID user terdaftar sebagai admin di DB: /admins/{uid}: true
-    const dbRes = await get(ref(db, `admins/${user.uid}`));
-    isAdmin = dbRes.exists() && dbRes.val() === true;
-
-    emailEl.style.display='none';
-    passwordEl.style.display='none';
-    btnSignUp.style.display='none';
-    btnLogin.style.display='none';
-    btnLogout.style.display='inline-block';
-    loginMsg.style.display='none';
-
-    if(isAdmin){
-      adminPanel.style.display='block';
-      loadPending();
-    }else{
-      adminPanel.style.display='none';
-      pendingList.innerHTML="<i>Anda bukan admin</i>";
-    }
-  }else{
-    isAdmin=false;
-    emailEl.style.display='block';
-    passwordEl.style.display='block';
-    btnSignUp.style.display='inline-block';
-    btnLogin.style.display='inline-block';
-    btnLogout.style.display='none';
-
-    adminPanel.style.display='none';
-    pendingList.innerHTML='';
-  }
-});
-
-// Menampilkan pesan pending (hanya untuk admin)
-function loadPending(){
-  onValue(ref(db,"forum"),snap=>{
-    const data=snap.val()||{};
-    let html="";
-    Object.keys(data).forEach(id=>{
-      const d=data[id];
-      if(d.status==="pending") html+=`
-      <div class="pending-item">
-        <b>${escapeHtml(d.nama)}</b><br>
-        ${escapeHtml(d.pesan)}
-        <div style="margin-top:6px">
-          <button onclick="approve('${id}')" class="btn">Approve</button>
-          <button onclick="del('${id}')" class="btn ghost">Delete</button>
-        </div>
-      </div>`;
+        pesanEl.value = '';
+        notice.innerText = 'Pesan terkirim dan menunggu verifikasi admin.';
+      } catch(err){
+        console.error(err);
+        alert('Gagal mengirim pesan — coba lagi.');
+      }
     });
-    pendingList.innerHTML=html||"<i>Tidak ada pesan pending</i>";
-  });
-}
 
-// Fungsi approve & delete: hanya berfungsi jika user adalah admin (cek sisi client dulu, DB rules harus juga diterapkan!)
-window.approve=async id=>{
-  if(!isAdmin) return alert('Akses ditolak. Anda bukan admin.');
-  await update(ref(db,"forum/"+id),{status:"approved"});
-};
+    btnClear.addEventListener('click', ()=>{ namaEl.value=''; pesanEl.value=''; notice.innerText=''; });
 
-window.del=async id=>{
-  if(!isAdmin) return alert('Akses ditolak. Anda bukan admin.');
-  if(confirm('Hapus?')) await remove(ref(db,"forum/"+id));
-};
+    // ====== PUBLIC: tampilkan hanya yg approved ======
+    const forumRef = ref(db, 'forum');
+    onValue(forumRef, (snap) => {
+      const data = snap.val() || {};
+      renderApprovedList(data);
+      renderPendingList(data);
+    });
 
-// Helper
-function escapeHtml(t){ if(!t) return ''; return t.replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
-</script>
+    function renderApprovedList(data){
+      const keys = Object.keys(data);
+      let html = '';
+      for(const k of keys){
+        const item = data[k];
+        if(item && item.status === 'approved'){
+          const t = new Date(item.time || Date.now());
+          html += `<div class="msg"><div class="name">${escapeHtml(item.nama)}</div><div class="text">${escapeHtml(item.pesan)}</div><div class="meta">${t.toLocaleString()}</div></div>`;
+        }
+      }
+      listPesan.innerHTML = html;
+    }
 
-<!-- SCRIPT UNTUK GENERATE GAMBAR -->
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script>
-window.downloadBubble=function(id){
-  const el=document.getElementById(id);
-  html2canvas(el,{backgroundColor:null}).then(canvas=>{
-    const a=document.createElement("a");
-    a.download="pesan-"+Date.now()+".png";
-    a.href=canvas.toDataURL();
-    a.click();
-  });
-};
-</script>
+    // Render pending list for adminPanel — only show approve/delete buttons if isAdmin
+    function renderPendingList(data){
+      const keys = Object.keys(data || {});
+      let html = '';
+      for(const id of keys){
+        const p = data[id];
+        if(p && p.status === 'pending'){
+          html += `<div class="pending-item"><div style="font-weight:700">${escapeHtml(p.nama)}</div><div style="margin-top:6px">${escapeHtml(p.pesan)}</div>`;
+          if(isAdmin){
+            html += `<div class="pending-actions"><button onclick="approve('${id}')" class="btn">Approve</button> <button onclick="del('${id}')" class="btn ghost">Hapus</button></div>`;
+          } else {
+            html += `<div class="small" style="margin-top:8px;color:var(--muted)">Tunggu admin untuk verifikasi.</div>`;
+          }
+          html += `</div>`;
+        }
+      }
+      pendingList.innerHTML = html || '<div style="color:var(--muted)">Tidak ada pesan pending</div>';
+    }
 
+    // ====== ROUTING sederhana via hash ======
+    function route(){
+      if(location.hash === '#admin'){
+        publicPage.style.display = 'none';
+        adminPage.style.display = 'block';
+        adminPage.setAttribute('aria-hidden','false');
+        // Tampilkan login box atau admin panel sesuai status auth
+        if(currentUser && isAdmin){
+          document.getElementById('loginBox').style.display = 'none';
+          adminPanel.style.display = 'block';
+        } else {
+          adminPanel.style.display = 'none';
+          document.getElementById('loginBox').style.display = 'block';
+        }
+      } else {
+        publicPage.style.display = 'block';
+        adminPage.style.display = 'none';
+        adminPage.setAttribute('aria-hidden','true');
+        loginMsg.style.display = 'none';
+      }
+    }
+    window.addEventListener('hashchange', route);
+    route();
+
+    // ====== AUTH: login (Firebase Auth email/password) ======
+    btnLogin.addEventListener('click', async () => {
+      const email = (adminEmail.value || '').trim();
+      const pass = adminPass.value || '';
+      if(!email || !pass){ loginMsg.innerText = 'Isi email dan password'; loginMsg.style.display='block'; return; }
+
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+        loginMsg.style.display = 'none';
+        // onAuthStateChanged akan handle UI
+      } catch (err) {
+        console.error(err);
+        loginMsg.innerText = 'Login gagal — periksa kredensial';
+        loginMsg.style.display = 'block';
+      }
+    });
+
+    btnLogout.addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+      } catch(err){
+        console.error(err);
+        alert('Gagal logout');
+      }
+    });
+
+    backPublic.addEventListener('click', (e)=>{ e.preventDefault(); location.hash=''; });
+
+    // ====== AUTH state listener ======
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      isAdmin = false;
+      if(user && user.email){
+        // Tentukan apakah user termasuk admin berdasarkan daftar email
+        if(ALLOWED_ADMINS.includes(user.email.toLowerCase())){
+          isAdmin = true;
+        }
+      }
+
+      // update UI bits
+      if(isAdmin){
+        adminInfo.innerText = `Signed in: ${currentUser.email}`;
+        document.getElementById('loginBox').style.display = 'none';
+        adminPanel.style.display = 'block';
+      } else {
+        adminInfo.innerText = '';
+        adminPanel.style.display = 'none';
+        document.getElementById('loginBox').style.display = 'block';
+      }
+
+      // re-render pending list so buttons appear/disappear correctly
+      // onValue already keeps local cache; trigger a small re-render by reading current snapshot:
+      // (we re-render based on most recent value)
+      // NOTE: this does not fetch remote; onValue callback will already trigger when DB changes.
+      // But to ensure immediate re-render after login state change, we read the snapshot once:
+      // (Read permission must allow)
+      // We'll rely on the onValue listener to call renderPendingList when data arrives; but call route() to show correct panel.
+      route();
+    });
+
+    // ====== ADMIN ACTIONS: approve / delete (client-side check + call) ======
+    // Expose to window so onclick in generated HTML can call them
+    window.approve = async function(id){
+      if(!currentUser || !isAdmin){
+        alert('Anda tidak berwenang melakukan aksi ini.');
+        return;
+      }
+      try {
+        const itemRef = ref(db, 'forum/' + id);
+        await update(itemRef, { status: 'approved' });
+      } catch(err){
+        console.error(err);
+        alert('Gagal approve pesan.');
+      }
+    }
+
+    window.del = async function(id){
+      if(!currentUser || !isAdmin){
+        alert('Anda tidak berwenang melakukan aksi ini.');
+        return;
+      }
+      if(!confirm('Hapus pesan ini?')) return;
+      try {
+        const itemRef = ref(db, 'forum/' + id);
+        await remove(itemRef);
+      } catch(err){
+        console.error(err);
+        alert('Gagal menghapus pesan.');
+      }
+    }
+
+    // ====== UTIL ======
+    function escapeHtml(str){
+      return String(str || '')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#39;");
+    }
+  </script>
 </body>
 </html>
