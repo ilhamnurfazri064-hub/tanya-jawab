@@ -5,277 +5,238 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Forum Tanya Jawab</title>
   <style>
-    .donasi-container {
-    text-align: center;
-    padding: 20px;
-    font-family: Arial;
-}
-
-.donasi-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-}
-
-.qr {
-    width: 200px;
-    border-radius: 10px;
-}
-
-.btn-saweria {
-    background: #1a73e8;
-    color: white;
-    padding: 12px 20px;
-    border-radius: 10px;
-    text-decoration: none;
-    font-size: 16px;
-    display: inline-block;
-}
+    .donasi-container{text-align: center;padding: 20px;font-family: Arial;}
+    .donasi-box{display:flex;flex-direction:column;align-items:center;gap:15px}
+    .qr{width:200px;border-radius:10px}
+    .btn-saweria{background:#1a73e8;color:white;padding:12px 20px;border-radius:10px;text-decoration:none;font-size:16px;display:inline-block}
+    
     :root{--bg:#f6f7fb;--card:#ffffff;--muted:#6b7280;--accent:#2563eb;--danger:#ef4444}
     *{box-sizing:border-box}
-    body{font-family:Inter, system-ui, Arial; margin:0; background:var(--bg); color:#111}
+    body{font-family:Inter, system-ui, Arial;margin:0;background:var(--bg);color:#111}
     .container{max-width:900px;margin:30px auto;padding:20px}
-
     header h1{margin:0 0 10px;font-size:22px}
     .card{background:var(--card);border-radius:10px;padding:16px;box-shadow:0 6px 18px rgba(16,24,40,0.06)}
-
     form{display:flex;gap:12px;flex-direction:column}
     input[type=text], textarea{width:100%;padding:12px;border:1px solid #e6e9ef;border-radius:8px;font-size:14px}
     textarea{min-height:80px;resize:vertical}
     .row{display:flex;gap:12px}
     .btn{background:var(--accent);color:#fff;padding:10px 14px;border-radius:8px;border:0;cursor:pointer}
     .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(37,99,235,0.18)}
-
-    /* chat list */
     #listPesan{margin-top:18px}
-    .msg{display:block;background:#f3f4f6;padding:14px;border-radius:10px;margin-bottom:10px}
-    .msg .name{font-weight:700;color:#0f172a}
-    .msg .text{margin-top:6px;color:#111}
+    .msg{background:#ffffff;padding:14px;border-radius:12px;margin-bottom:12px;border-left:4px solid #2563eb;box-shadow:0 3px 8px rgba(0,0,0,0.05)}
+    .msg .name{font-weight:700;color:#0f172a;font-size:15px}
+    .msg .text{margin-top:6px;color:#111;font-size:14px}
     .msg .meta{margin-top:8px;color:var(--muted);font-size:12px}
-
-    /* admin link */
-    .admin-link{display:inline-block;margin-top:10px;color:var(--muted);text-decoration:none}
-
-    /* admin panel modal-like block when on #admin */
+    .admin-link{margin-top:10px;display:inline-block;color:var(--muted);text-decoration:none}
+    
     #adminPage{display:none}
-    .admin-wrap{display:flex;gap:12px;align-items:flex-start}
-    .pending-list{flex:1}
-    .pending-item{background:#fff;padding:12px;border-radius:8px;border:1px solid #eef2ff;margin-bottom:8px}
-    .pending-actions{margin-top:8px}
-
-    /* responsive */
+    .pending-list{margin-top:10px}
+    .pending-item{background:#fff;padding:12px;border-radius:12px;border:1px solid #eef2ff;margin-bottom:8px}
     @media(max-width:600px){.row{flex-direction:column}}
   </style>
 </head>
 <body>
   
   <div class="donasi-container">
-     <h2>Dukung dengan Donasi</h2>
-     <div class="donasi-box">
+    <h2>Dukung dengan Donasi</h2>
+    <div class="donasi-box">
       <a href="https://saweria.co/FaziCihuy" target="_blank">
-  <button style="background:#2563eb;padding:14px 20px;border-radius:10px;color:white;border:none;font-size:18px;">
-    🚀 Donasi via Saweria
-  </button>
-       </a>
-      <img class="img" src="qr.png" width="150"/>
-      </div>
-
+        <button style="background:#2563eb;padding:14px 20px;border-radius:10px;color:white;border:none;font-size:18px;">
+          🚀 Donasi via Saweria
+        </button>
+      </a>
+      <img class="qr" src="qr.png"/>
+    </div>
   </div>
+
   <div class="container">
     <header>
       <h1>Forum Tanya Jawab</h1>
-      <p style="margin:0;color:var(--muted)">Kirim pesan — akan tampil **setelah** disetujui admin.</p>
+      <p style="margin:0;color:var(--muted)">Kirim pesan — akan tampil setelah disetujui admin.</p>
     </header>
 
-    <main>
-      <section class="card" id="publicPage">
-        <form id="frm">
-          <input id="nama" type="text" placeholder="Nama (opsional)" />
-          <textarea id="pesan" placeholder="Tulis pesan..."></textarea>
-          <div class="row">
-            <button type="button" class="btn" id="btnKirim">Kirim</button>
-            <button type="button" class="btn ghost" id="btnClear">Bersihkan</button>
-            <a href="#admin" class="admin-link">Masuk ke halaman admin</a>
-          </div>
-        </form>
-
-        <div id="notice" style="margin-top:12px;color:var(--muted);font-size:13px"></div>
-
-        <div id="listPesan"></div>
-      </section>
-
-      <section class="card" id="adminPage">
-        <h2>Admin Panel</h2>
-        <div id="adminWrap">
-          <div id="loginBox">
-            <p>Masuk sebagai admin</p>
-            <input id="adminPass" type="text" placeholder="Masukkan password admin" />
-            <div style="margin-top:8px">
-              <button id="btnLogin" class="btn">Login</button>
-              <a href="#" id="backPublic" class="admin-link">Kembali</a>
-            </div>
-            <div id="loginMsg" style="color:var(--danger);margin-top:8px;display:none"></div>
-          </div>
-
-          <div id="adminPanel" style="margin-top:12px;display:none">
-            <h3>Pesan Pending</h3>
-            <div class="pending-list" id="pendingList"></div>
-          </div>
+    <section class="card" id="publicPage">
+      <form id="frm">
+        <input id="nama" type="text" placeholder="Nama (opsional)" />
+        <textarea id="pesan" placeholder="Tulis pesan..."></textarea>
+        <div class="row">
+          <button type="button" class="btn" id="btnKirim">Kirim</button>
+          <button type="button" class="btn ghost" id="btnClear">Bersihkan</button>
+          <a href="#admin" class="admin-link">Admin</a>
         </div>
-      </section>
+      </form>
+      <div id="notice" style="margin-top:12px;color:var(--muted);font-size:13px"></div>
+      <div id="listPesan"></div>
+    </section>
 
-    </main>
+    <section class="card" id="adminPage">
+      <h2>Admin Panel</h2>
+
+      <div id="loginBox">
+        <input id="adminPass" type="password" placeholder="Password admin" />
+        <button id="btnLogin" class="btn" style="margin-top:8px">Login</button>
+        <div id="loginMsg" style="color:var(--danger);margin-top:8px;display:none"></div>
+      </div>
+
+      <div id="adminPanel" style="display:none;margin-top:15px">
+        <h3>Pesan Pending</h3>
+        <div id="pendingList"></div>
+      </div>
+
+      <a href="#" id="backPublic" class="admin-link">Kembali</a>
+    </section>
   </div>
 
-  <!-- Firebase modular SDK v10 (script type module) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+<script type="module">
+import { 
+  initializeApp 
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 
-    // ---- GANTI config jika berbeda ----
-    const firebaseConfig = {
-      apiKey: "AIzaSyAh1IGfxM1RRo-c2fUbkGE0NzsZL7Mz1u4",
-      authDomain: "forum-tanya-jawab.firebaseapp.com",
-      databaseURL: "https://forum-tanya-jawab-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "forum-tanya-jawab",
-      storageBucket: "forum-tanya-jawab.appspot.com",
-      messagingSenderId: "679242793604",
-      appId: "1:679242793604:web:54ae1f7608a26fdde738d1"
-    };
+import { 
+  getDatabase, ref, push, set, onValue, update, remove, get 
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+import bcrypt from "https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js";
 
-    // Elements
-    const namaEl = document.getElementById('nama');
-    const pesanEl = document.getElementById('pesan');
-    const btnKirim = document.getElementById('btnKirim');
-    const btnClear = document.getElementById('btnClear');
-    const listPesan = document.getElementById('listPesan');
-    const notice = document.getElementById('notice');
+const firebaseConfig = {
+  apiKey: "AIzaSyAh1IGfxM1RRo-c2fUbkGE0NzsZL7Mz1u4",
+  authDomain: "forum-tanya-jawab.firebaseapp.com",
+  databaseURL: "https://forum-tanya-jawab-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "forum-tanya-jawab",
+  storageBucket: "forum-tanya-jawab.appspot.com",
+  messagingSenderId: "679242793604",
+  appId: "1:679242793604:web:54ae1f7608a26fdde738d1"
+};
 
-    const adminPage = document.getElementById('adminPage');
-    const publicPage = document.getElementById('publicPage');
-    const adminPass = document.getElementById('adminPass');
-    const btnLogin = document.getElementById('btnLogin');
-    const loginMsg = document.getElementById('loginMsg');
-    const adminPanel = document.getElementById('adminPanel');
-    const pendingList = document.getElementById('pendingList');
-    const backPublic = document.getElementById('backPublic');
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-    // default admin password (ganti segera!)
-    const ADMIN_PASSWORD = 'ironmaiden';
-    let isAdmin = false;
+// UI Elemen
+const namaEl=document.getElementById("nama");
+const pesanEl=document.getElementById("pesan");
+const btnKirim=document.getElementById("btnKirim");
+const btnClear=document.getElementById("btnClear");
+const notice=document.getElementById("notice");
+const listPesan=document.getElementById("listPesan");
 
-    // ====== PUBLIC: kirim pesan (status pending) ======
-    btnKirim.addEventListener('click', async () => {
-      const nama = (namaEl.value || 'Anonim').trim();
-      const pesan = (pesanEl.value || '').trim();
-      if(!pesan){ alert('Isi pesan dulu'); return }
+btnKirim.onclick=async()=>{
+  const nama=(namaEl.value||"Anonim").trim();
+  const pesan=pesanEl.value.trim();
+  if(!pesan) return alert("Isi pesan dulu!");
 
-      // push with status pending
-      const messagesRef = ref(db, 'forum');
-      const newRef = push(messagesRef);
-      await set(newRef, { nama, pesan, status: 'pending', time: Date.now() });
+  await set(push(ref(db,"forum")),{
+    nama,pesan,status:"pending",time:Date.now()
+  });
 
-      pesanEl.value = '';
-      notice.innerText = 'Pesan terkirim dan menunggu verifikasi admin.';
+  pesanEl.value="";
+  notice.innerHTML="Pesan terkirim dan menunggu verifikasi admin.";
+};
+
+btnClear.onclick=()=>{namaEl.value="";pesanEl.value="";notice.innerHTML=""};
+
+onValue(ref(db,"forum"),snap=>{
+  const data=snap.val()||{};
+  let html="";
+  Object.keys(data).forEach(k=>{
+    const d=data[k];
+    if(d.status==="approved"){
+      html+=`
+      <div class="msg" id="msg-${k}">
+        <div class="name">${escapeHtml(d.nama)}</div>
+        <div class="text">${escapeHtml(d.pesan)}</div>
+        <div class="meta">${new Date(d.time).toLocaleString()}</div>
+        <button class="btn ghost" style="margin-top:6px;font-size:12px" onclick="downloadBubble('msg-${k}')">📥 Download</button>
+      </div>`;
+    }
+  });
+  listPesan.innerHTML=html;
+});
+
+// -------- SYSTEM ADMIN --------
+
+const adminPage=document.getElementById("adminPage");
+const publicPage=document.getElementById("publicPage");
+const adminPanel=document.getElementById("adminPanel");
+const adminPass=document.getElementById("adminPass");
+const loginMsg=document.getElementById("loginMsg");
+const pendingList=document.getElementById("pendingList");
+const btnLogin=document.getElementById("btnLogin");
+const backPublic=document.getElementById("backPublic");
+let isAdmin=false;
+
+function route(){
+  if(location.hash==="#admin"){
+    adminPage.style.display="block"; publicPage.style.display="none";
+  }else{ adminPage.style.display="none"; publicPage.style.display="block"; }
+}
+route();
+window.addEventListener("hashchange",route);
+
+// 🔐 LOGIN DENGAN BCRYPT + FIREBASE
+btnLogin.onclick=async()=>{
+  const dbPass=await get(ref(db,"admin/password"));
+
+  if(!dbPass.exists()){
+    loginMsg.innerHTML="⚠️ Password admin belum disimpan di Firebase!";
+    loginMsg.style.display="block";
+    return;
+  }
+
+  const hashed=dbPass.val();
+  const valid=bcrypt.compareSync(adminPass.value,hashed);
+
+  if(valid){
+    isAdmin=true;
+    loginMsg.style.display="none";
+    adminPanel.style.display="block";
+    loadPending();
+  }else{
+    loginMsg.innerHTML="Password salah!";
+    loginMsg.style.display="block";
+  }
+};
+
+// Menampilkan pesan pending
+function loadPending(){
+  onValue(ref(db,"forum"),snap=>{
+    const data=snap.val()||{};
+    let html="";
+    Object.keys(data).forEach(id=>{
+      const d=data[id];
+      if(d.status==="pending") html+=`
+      <div class="pending-item">
+        <b>${escapeHtml(d.nama)}</b><br>
+        ${escapeHtml(d.pesan)}
+        <div style="margin-top:6px">
+          <button onclick="approve('${id}')" class="btn">Approve</button>
+          <button onclick="del('${id}')" class="btn ghost">Delete</button>
+        </div>
+      </div>`;
     });
+    pendingList.innerHTML=html||"<i>Tidak ada pesan pending</i>";
+  });
+}
 
-    btnClear.addEventListener('click', ()=>{ namaEl.value=''; pesanEl.value=''; notice.innerText=''; });
+window.approve=id=>update(ref(db,"forum/"+id),{status:"approved"});
+window.del=id=>{if(confirm("Hapus?")) remove(ref(db,"forum/"+id))};
 
-    // ====== PUBLIC: tampilkan hanya yg approved ======
-    const approvedRef = ref(db, 'forum');
-    onValue(approvedRef, (snap) => {
-      const data = snap.val() || {};
-      const keys = Object.keys(data);
-      let html = '';
-      // tampilkan hanya approved
-      for(const k of keys){
-        const item = data[k];
-        if(item && item.status === 'approved'){
-          const t = new Date(item.time || Date.now());
-          html += `<div class=\"msg\"><div class=\"name\">${escapeHtml(item.nama)}</div><div class=\"text\">${escapeHtml(item.pesan)}</div><div class=\"meta\">${t.toLocaleString()}</div></div>`;
-        }
-      }
-      listPesan.innerHTML = html;
-    });
+// Helper
+function escapeHtml(t){return t.replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+</script>
 
-    // ====== ADMIN: simple page routing via hash ======
-    function route(){
-      if(location.hash === '#admin'){
-        publicPage.style.display = 'none';
-        adminPage.style.display = 'block';
-        // show login box
-        adminPanel.style.display = 'none';
-        document.getElementById('loginBox').style.display = 'block';
-      } else {
-        publicPage.style.display = 'block';
-        adminPage.style.display = 'none';
-        loginMsg.style.display = 'none';
-      }
-    }
-    window.addEventListener('hashchange', route);
-    route();
+<!-- SCRIPT UNTUK GENERATE GAMBAR -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+window.downloadBubble=function(id){
+  const el=document.getElementById(id);
+  html2canvas(el,{backgroundColor:null}).then(canvas=>{
+    const a=document.createElement("a");
+    a.download="pesan-"+Date.now()+".png";
+    a.href=canvas.toDataURL();
+    a.click();
+  });
+};
+</script>
 
-    // ====== ADMIN: login and load pending ======
-    btnLogin.addEventListener('click', ()=>{
-      const pass = adminPass.value || '';
-      if(pass === ADMIN_PASSWORD){
-        isAdmin = true;
-        document.getElementById('loginBox').style.display = 'none';
-        adminPanel.style.display = 'block';
-        loadPending();
-      } else {
-        loginMsg.innerText = 'Password salah';
-        loginMsg.style.display = 'block';
-      }
-    });
-
-    backPublic.addEventListener('click', (e)=>{ e.preventDefault(); location.hash=''; });
-
-    function loadPending(){
-      onValue(ref(db,'forum'), (snap)=>{
-        if(!isAdmin) return;
-        const data = snap.val() || {};
-        let html = '';
-        for(const id of Object.keys(data)){
-          const p = data[id];
-          if(p.status === 'pending'){
-            html += `<div class=\"pending-item\"><div style=\"font-weight:700\">${escapeHtml(p.nama)}</div><div style=\"margin-top:6px\">${escapeHtml(p.pesan)}</div><div class=\"pending-actions\"><button onclick=\"approve('${id}')\" class=\"btn\">Approve</button> <button onclick=\"del('${id}')\" class=\"btn ghost\">Hapus</button></div></div>`;
-          }
-        }
-        pendingList.innerHTML = html || '<div style="color:var(--muted)">Tidak ada pesan pending</div>';
-      });
-    }
-
-    // global functions for approve and delete (window scope)
-    window.approve = async function(id){
-      const itemRef = ref(db, 'forum/' + id);
-      await update(itemRef, { status: 'approved' });
-    }
-
-    window.del = async function(id){
-      if(!confirm('Hapus pesan ini?')) return;
-      const itemRef = ref(db, 'forum/' + id);
-      await remove(itemRef);
-    }
-
-    // simple XSS escape
-    function escapeHtml(str){
-      return String(str)
-        .replaceAll('&','&amp;')
-        .replaceAll('<','&lt;')
-        .replaceAll('>','&gt;')
-        .replaceAll('"','&quot;')
-        .replaceAll("'","&#39;");
-    }
-
-  </script>
 </body>
 </html>
-
-
-
-
